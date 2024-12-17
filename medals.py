@@ -104,10 +104,13 @@ with DAG(
 
     check_for_correctness = SqlSensor(
         task_id='check_for_correctness',
-        conn_id=connection_name,
+        conn_id='connection_name',  # Замініть на ім'я вашого з'єднання
         sql="""
-        SELECT MAX(created_at) >= DATE_SUB(NOW(), INTERVAL 30 SECOND) FROM ivan_y.medals;
-        """
+        SELECT IF(MAX(created_at) >= DATE_SUB(NOW(), INTERVAL 30 SECOND), TRUE, FALSE) FROM ivan_y.medals;
+        """,
+        mode='poke',
+        poke_interval=10,  # перевірка кожні 10 секунд
+        timeout=30  # тайм-аут після 30 секунд
     )
 
     create_schema >> create_table >> pick_medal_task >> [calc_Bronze, calc_Silver, calc_Gold]
