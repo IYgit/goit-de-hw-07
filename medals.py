@@ -10,6 +10,7 @@ from airflow.operators.python import PythonOperator, BranchPythonOperator
 from airflow.operators.mysql_operator import MySqlOperator
 from airflow.sensors.sql import SqlSensor
 from airflow.utils.dates import days_ago
+from airflow.utils.trigger_rule import TriggerRule
 from datetime import datetime, timedelta
 import random
 import time
@@ -95,9 +96,15 @@ with DAG(
         """
     )
 
+    # generate_delay_task = PythonOperator(
+    #     task_id='generate_delay',
+    #     python_callable=generate_delay
+    # )
+    
     generate_delay_task = PythonOperator(
         task_id='generate_delay',
-        python_callable=generate_delay
+        python_callable=generate_delay,
+        trigger_rule=TriggerRule.ONE_SUCCESS   # має викликатись від успіху будь якої попередньої таски
     )
 
     check_for_correctness = SqlSensor(
@@ -108,8 +115,12 @@ with DAG(
         """
     )
 
-    create_schema >>create_table >> pick_medal_task >> [calc_Bronze, calc_Silver, calc_Gold]
-    calc_Bronze >> generate_delay_task
-    calc_Silver >> generate_delay_task
-    calc_Gold >> generate_delay_task
+    # create_schema >>create_table >> pick_medal_task >> [calc_Bronze, calc_Silver, calc_Gold]
+    # calc_Bronze >> generate_delay_task
+    # calc_Silver >> generate_delay_task
+    # calc_Gold >> generate_delay_task
+    # generate_delay_task >> check_for_correctness
+
+    create_schema >> create_table >> pick_medal_task >> [calc_Bronze, calc_Silver, calc_Gold]
+    [calc_Bronze, calc_Silver, calc_Gold] >> generate_delay_task
     generate_delay_task >> check_for_correctness
