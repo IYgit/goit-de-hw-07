@@ -18,8 +18,8 @@ import time
 default_args = {
     'owner': 'airflow',
     'start_date': days_ago(1),
-    'retries': 2,
-    'retry_delay': timedelta(minutes=1),
+    'retries': 0,
+    'retry_delay': timedelta(minutes=0),
 }
 
 def pick_medal():
@@ -95,11 +95,6 @@ with DAG(
         WHERE medal='Gold';
         """
     )
-
-    # generate_delay_task = PythonOperator(
-    #     task_id='generate_delay',
-    #     python_callable=generate_delay
-    # )
     
     generate_delay_task = PythonOperator(
         task_id='generate_delay',
@@ -114,12 +109,6 @@ with DAG(
         SELECT MAX(created_at) >= DATE_SUB(NOW(), INTERVAL 30 SECOND) FROM ivan_y.medals;
         """
     )
-
-    # create_schema >>create_table >> pick_medal_task >> [calc_Bronze, calc_Silver, calc_Gold]
-    # calc_Bronze >> generate_delay_task
-    # calc_Silver >> generate_delay_task
-    # calc_Gold >> generate_delay_task
-    # generate_delay_task >> check_for_correctness
 
     create_schema >> create_table >> pick_medal_task >> [calc_Bronze, calc_Silver, calc_Gold]
     [calc_Bronze, calc_Silver, calc_Gold] >> generate_delay_task
